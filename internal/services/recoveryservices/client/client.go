@@ -1,8 +1,10 @@
 package client
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/recoveryservices/mgmt/2021-08-01/recoveryservices" // nolint: staticcheck
-	"github.com/Azure/azure-sdk-for-go/services/recoveryservices/mgmt/2021-12-01/backup"           // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/recoveryservices/mgmt/2021-12-01/backup" // nolint: staticcheck
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservices/2022-10-01/vaults"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2021-12-01/backupresourcestorageconfigsnoncrr"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2021-12-01/backupresourcevaultconfigs"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicessiterecovery/2022-10-01/replicationfabrics"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicessiterecovery/2022-10-01/replicationnetworkmappings"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicessiterecovery/2022-10-01/replicationpolicies"
@@ -21,9 +23,10 @@ type Client struct {
 	ProtectionContainerOperationResultsClient *backup.ProtectionContainerOperationResultsClient
 	BackupProtectionContainersClient          *backup.ProtectionContainersClient
 	BackupOperationStatusesClient             *backup.OperationStatusesClient
-	VaultsClient                              *recoveryservices.VaultsClient
-	VaultsConfigsClient                       *backup.ResourceVaultConfigsClient // Not sure why this is in backup, but https://github.com/Azure/azure-sdk-for-go/issues/7279
-	StorageConfigsClient                      *backup.ResourceStorageConfigsNonCRRClient
+	BackupOperationResultsClient              *backup.OperationResultsClient
+	VaultsClient                              *vaults.VaultsClient
+	VaultsConfigsClient                       *backupresourcevaultconfigs.BackupResourceVaultConfigsClient
+	StorageConfigsClient                      *backupresourcestorageconfigsnoncrr.BackupResourceStorageConfigsNonCRRClient
 	FabricClient                              *replicationfabrics.ReplicationFabricsClient
 	ProtectionContainerClient                 *replicationprotectioncontainers.ReplicationProtectionContainersClient
 	ReplicationPoliciesClient                 *replicationpolicies.ReplicationPoliciesClient
@@ -34,13 +37,13 @@ type Client struct {
 }
 
 func NewClient(o *common.ClientOptions) *Client {
-	vaultConfigsClient := backup.NewResourceVaultConfigsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	vaultConfigsClient := backupresourcevaultconfigs.NewBackupResourceVaultConfigsClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&vaultConfigsClient.Client, o.ResourceManagerAuthorizer)
 
-	storageConfigsClient := backup.NewResourceStorageConfigsNonCRRClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	storageConfigsClient := backupresourcestorageconfigsnoncrr.NewBackupResourceStorageConfigsNonCRRClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&storageConfigsClient.Client, o.ResourceManagerAuthorizer)
 
-	vaultsClient := recoveryservices.NewVaultsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	vaultsClient := vaults.NewVaultsClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&vaultsClient.Client, o.ResourceManagerAuthorizer)
 
 	protectableItemsClient := backup.NewProtectableItemsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
@@ -60,6 +63,9 @@ func NewClient(o *common.ClientOptions) *Client {
 
 	backupOperationStatusesClient := backup.NewOperationStatusesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&backupOperationStatusesClient.Client, o.ResourceManagerAuthorizer)
+
+	backupOperationResultClient := backup.NewOperationResultsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&backupOperationResultClient.Client, o.ResourceManagerAuthorizer)
 
 	backupProtectionContainerOperationResultsClient := backup.NewProtectionContainerOperationResultsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&backupProtectionContainerOperationResultsClient.Client, o.ResourceManagerAuthorizer)
@@ -93,6 +99,7 @@ func NewClient(o *common.ClientOptions) *Client {
 		ProtectionContainerOperationResultsClient: &backupProtectionContainerOperationResultsClient,
 		BackupProtectionContainersClient:          &backupProtectionContainersClient,
 		BackupOperationStatusesClient:             &backupOperationStatusesClient,
+		BackupOperationResultsClient:              &backupOperationResultClient,
 		VaultsClient:                              &vaultsClient,
 		VaultsConfigsClient:                       &vaultConfigsClient,
 		StorageConfigsClient:                      &storageConfigsClient,

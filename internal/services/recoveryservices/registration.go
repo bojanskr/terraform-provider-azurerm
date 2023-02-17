@@ -17,12 +17,16 @@ func (r Registration) AssociatedGitHubLabel() string {
 }
 
 func (r Registration) DataSources() []sdk.DataSource {
-	return []sdk.DataSource{}
+	return []sdk.DataSource{
+		SiteRecoveryReplicationRecoveryPlanDataSource{},
+	}
 }
 
 func (r Registration) Resources() []sdk.Resource {
 	return []sdk.Resource{
 		BackupProtectionPolicyVMWorkloadResource{},
+		SiteRecoveryReplicationRecoveryPlanResource{},
+		HyperVSiteResource{},
 	}
 }
 
